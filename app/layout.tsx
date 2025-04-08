@@ -1,6 +1,6 @@
 export const metadata = {
-  title: 'YSOT GPT Chat',
-  description: 'GPT API 기반 학과 전용 챗봇',
+  title: 'YSOT GPT ChAT',
+  description: 'A GPT-4 Turbo chatbot for the Department of Occupational Therapy',
 }
 
 export default function RootLayout({
@@ -9,7 +9,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="ko">
+    <html lang="en">
       <body>{children}</body>
     </html>
   )
