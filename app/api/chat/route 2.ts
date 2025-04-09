@@ -2,7 +2,7 @@ import { OpenAIStream, StreamingTextResponse } from 'ai'
 import OpenAI from 'openai'
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: process.env.OPENAI_API_KEY!,
 })
 
 export const runtime = 'edge'
@@ -10,13 +10,14 @@ export const runtime = 'edge'
 export async function POST(req: Request) {
   try {
     const { messages } = await req.json()
+
     const response = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-4-turbo',
       stream: true,
-      messages
+      messages,
     })
 
-    const stream = OpenAIStream(response)
+    const stream = await OpenAIStream(response)
     return new StreamingTextResponse(stream)
   } catch (error) {
     console.error('❌ API Error:', error)
