@@ -1,6 +1,5 @@
 
 import { OpenAIStream, streamToResponse } from 'ai';
-import type { OpenAIStreamPayload } from 'ai';
 import OpenAI from 'openai';
 
 export const runtime = 'edge';
@@ -13,13 +12,13 @@ export async function POST(req: Request) {
   try {
     const { messages } = await req.json();
 
-    const payload: OpenAIStreamPayload = {
+    const response = await openai.chat.completions.create({
       model: 'gpt-4-turbo',
       stream: true,
       messages,
-    };
+    });
 
-    const stream = await OpenAIStream(payload);
+    const stream = OpenAIStream(response);
     return streamToResponse(stream);
   } catch (error) {
     console.error('❌ API Error:', error);
