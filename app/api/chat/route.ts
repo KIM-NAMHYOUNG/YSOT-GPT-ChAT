@@ -1,25 +1,21 @@
-// app/api/chat/route.ts
-
-import { OpenAI } from 'openai';
-import { NextResponse } from 'next/server';
+import OpenAI from 'openai'
+import { OpenAIStream, StreamingTextResponse } from 'ai'
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+  apiKey: process.env.OPENAI_API_KEY!,
+})
+
+export const runtime = 'edge'
 
 export async function POST(req: Request) {
-  try {
-    const { messages } = await req.json();
+  const { messages } = await req.json()
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4',
-      messages,
-      stream: false,
-    });
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4-turbo',
+    stream: true,
+    messages,
+  })
 
-    return NextResponse.json(completion);
-  } catch (error) {
-    console.error('❌ API Error:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
-  }
+  const stream = OpenAIStream(response)
+  return new StreamingTextResponse(stream)
 }
