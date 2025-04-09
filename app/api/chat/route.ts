@@ -1,7 +1,5 @@
-
 import { OpenAIStream, streamToResponse } from "ai";
 import OpenAI from "openai";
-import { OpenAIStreamPayload } from "ai";
 
 export const runtime = "edge";
 
@@ -10,14 +8,19 @@ const openai = new OpenAI({
 });
 
 export async function POST(req: Request) {
-  const { messages } = await req.json();
+  try {
+    const { messages } = await req.json();
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-4-turbo",
-    stream: true,
-    messages,
-  });
+    const response = await openai.chat.completions.create({
+      model: "gpt-4-turbo",
+      stream: true,
+      messages,
+    });
 
-  const stream = OpenAIStream(response);
-  return streamToResponse(stream);
+    const stream = OpenAIStream(response);
+    return streamToResponse(stream);
+  } catch (error) {
+    console.error("❌ API Error:", error);
+    return new Response("Something went wrong", { status: 500 });
+  }
 }
