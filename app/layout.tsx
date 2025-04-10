@@ -1,5 +1,16 @@
-"use client";
+export const metadata = {
+  title: 'YSOT GPT Chat',
+  description: 'GPT 기반 학과 챗봇',
+};
 
-export default function ChatLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="ko">
+      <body>{children}</body>
+    </html>
+  );
 }
