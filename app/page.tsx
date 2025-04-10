@@ -20,7 +20,9 @@ export default function ChatPage() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        messages: newMessages.map((content) => ({ role: 'user', content })),
+        messages: [
+          ...newMessages.map((content) => ({ role: 'user', content: content.replace(/^You: /, '') })),
+        ],
       }),
     });
 
@@ -33,8 +35,29 @@ export default function ChatPage() {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      aiMessage += decoder.decode(value);
-      setMessages((prev) => [...newMessages, `AI: ${aiMessage}`]);
+      const chunk = decoder.decode(value);
+
+      // 추출: "data: { ... }" 형식에서 content만 뽑기
+      const lines = chunk.split('\n');
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const json = line.replace('data: ', '');
+          if (json === '[DONE]') continue;
+          try {
+            const parsed = JSON.parse(json);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) {
+              aiMessage += content;
+              setMessages((prev) => {
+                const withoutLastAI = prev.filter((msg) => !msg.startsWith('AI: '));
+                return [...withoutLastAI, `AI: ${aiMessage}`];
+              });
+            }
+          } catch (err) {
+            console.error('JSON parse error:', err);
+          }
+        }
+      }
     }
   };
 
