@@ -1,10 +1,11 @@
-import { OpenAIStream, StreamingTextResponse } from 'ai';
-import OpenAI from 'openai';
+// app/api/chat/route.ts
+import { OpenAI } from 'openai';
+import { NextResponse } from 'next/server';
 
 export const runtime = 'edge';
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 export async function POST(req: Request) {
@@ -16,6 +17,20 @@ export async function POST(req: Request) {
     messages,
   });
 
-  const stream = OpenAIStream(response);
-  return new StreamingTextResponse(stream);
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      for await (const chunk of response) {
+        const content = chunk.choices?.[0]?.delta?.content || '';
+        controller.enqueue(encoder.encode(content));
+      }
+      controller.close();
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+    },
+  });
 }
