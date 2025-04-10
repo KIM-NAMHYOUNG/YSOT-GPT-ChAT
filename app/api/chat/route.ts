@@ -1,35 +1,24 @@
-import OpenAI from 'openai';
-
 export const runtime = 'edge';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
 
 export async function POST(req: Request) {
   const { messages } = await req.json();
 
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4-turbo',
-    stream: true,
-    messages,
-  });
-
-  const encoder = new TextEncoder();
-
-  const stream = new ReadableStream({
-    async start(controller) {
-      for await (const chunk of response) {
-        const content = chunk.choices?.[0]?.delta?.content || '';
-        controller.enqueue(encoder.encode(content));
-      }
-      controller.close();
-    },
-  });
-
-  return new Response(stream, {
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
     headers: {
-      'Content-Type': 'text/plain; charset=utf-8',
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4-turbo',
+      stream: true,
+      messages,
+    }),
+  });
+
+  return new Response(response.body, {
+    headers: {
+      'Content-Type': 'text/event-stream',
     },
   });
 }

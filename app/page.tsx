@@ -1,4 +1,5 @@
-'use client';
-import ChatPage from './chat/ChatPage';
+import ChatPage from '@/components/ChatPage';
 
-export default ChatPage;
+export default function Home() {
+  return <ChatPage />;
+}

@@ -10,9 +10,8 @@ export default function ChatPage() {
     e.preventDefault();
     if (!input.trim()) return;
 
-    const userMessage = `You: ${input}`;
-    const updatedMessages = [...messages, userMessage];
-    setMessages(updatedMessages);
+    const newMessages = [...messages, `You: ${input}`];
+    setMessages(newMessages);
     setInput('');
 
     const response = await fetch('/api/chat', {
@@ -21,7 +20,10 @@ export default function ChatPage() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        messages: [{ role: 'user', content: input }],
+        messages: newMessages.map((msg) => ({
+          role: msg.startsWith('You:') ? 'user' : 'assistant',
+          content: msg.replace(/^You:\s?/, '').replace(/^AI:\s?/, ''),
+        })),
       }),
     });
 
@@ -30,23 +32,18 @@ export default function ChatPage() {
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let aiMessage = '';
-    const streamMessages = [...updatedMessages];
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
+      const chunk = decoder.decode(value, { stream: true });
 
-      const chunk = decoder.decode(value);
-      aiMessage += chunk;
-
-      // 메시지를 한 번만 추가하고, 그 뒤엔 계속 업데이트
-      if (streamMessages[streamMessages.length - 1].startsWith('AI:')) {
-        streamMessages[streamMessages.length - 1] = `AI: ${aiMessage}`;
-      } else {
-        streamMessages.push(`AI: ${aiMessage}`);
+      // 필터링하여 JSON에서 content만 추출
+      const matches = [...chunk.matchAll(/"content":"(.*?)"/g)];
+      for (const match of matches) {
+        aiMessage += match[1];
+        setMessages((prev) => [...newMessages, `AI: ${aiMessage}`]);
       }
-
-      setMessages([...streamMessages]);
     }
   };
 
