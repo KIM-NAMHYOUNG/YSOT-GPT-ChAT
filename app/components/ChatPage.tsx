@@ -2,16 +2,21 @@
 
 import { useState } from 'react';
 
+type Message = {
+  role: 'user' | 'assistant';
+  content: string;
+};
+
 export default function ChatPage() {
-  const [messages, setMessages] = useState<string[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
 
-    const newMessages = [...messages, `You: ${input}`];
-    setMessages(newMessages);
+    const updatedMessages: Message[] = [...messages, { role: 'user', content: input }];
+    setMessages(updatedMessages);
     setInput('');
 
     const response = await fetch('/api/chat', {
@@ -19,12 +24,7 @@ export default function ChatPage() {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        messages: [
-          { role: 'system', content: 'You are a helpful assistant.' },
-          { role: 'user', content: input },
-        ],
-      }),
+      body: JSON.stringify({ messages: updatedMessages }),
     });
 
     if (!response.body) return;
@@ -36,14 +36,16 @@ export default function ChatPage() {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-
       const chunkStr = decoder.decode(value, { stream: true });
 
-      // content 값만 추출
+      // JSON 안에서 content만 추출
       const matches = [...chunkStr.matchAll(/"content":"(.*?)"/g)];
       for (const match of matches) {
         aiMessage += match[1];
-        setMessages((prev) => [...newMessages, `AI: ${aiMessage}`]);
+        setMessages((prev) => [
+          ...updatedMessages,
+          { role: 'assistant', content: aiMessage },
+        ]);
       }
     }
   };
@@ -53,8 +55,13 @@ export default function ChatPage() {
       <h1 className="text-2xl font-bold mb-4">YSOT GPT Chat</h1>
       <div className="space-y-2 mb-4">
         {messages.map((msg, idx) => (
-          <div key={idx} className="bg-gray-100 p-2 rounded whitespace-pre-wrap">
-            {msg}
+          <div
+            key={idx}
+            className={`p-2 rounded ${
+              msg.role === 'user' ? 'bg-blue-100 text-right' : 'bg-gray-100 text-left'
+            }`}
+          >
+            <strong>{msg.role === 'user' ? 'You' : 'AI'}:</strong> {msg.content}
           </div>
         ))}
       </div>
