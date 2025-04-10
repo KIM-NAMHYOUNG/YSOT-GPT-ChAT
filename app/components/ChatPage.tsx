@@ -20,10 +20,10 @@ export default function ChatPage() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        messages: newMessages.map((msg) => ({
-          role: msg.startsWith('You:') ? 'user' : 'assistant',
-          content: msg.replace(/^You:\s?/, '').replace(/^AI:\s?/, ''),
-        })),
+        messages: [
+          { role: 'system', content: 'You are a helpful assistant.' },
+          { role: 'user', content: input },
+        ],
       }),
     });
 
@@ -36,10 +36,11 @@ export default function ChatPage() {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      const chunk = decoder.decode(value, { stream: true });
 
-      // 필터링하여 JSON에서 content만 추출
-      const matches = [...chunk.matchAll(/"content":"(.*?)"/g)];
+      const chunkStr = decoder.decode(value, { stream: true });
+
+      // content 값만 추출
+      const matches = [...chunkStr.matchAll(/"content":"(.*?)"/g)];
       for (const match of matches) {
         aiMessage += match[1];
         setMessages((prev) => [...newMessages, `AI: ${aiMessage}`]);
@@ -52,7 +53,7 @@ export default function ChatPage() {
       <h1 className="text-2xl font-bold mb-4">YSOT GPT Chat</h1>
       <div className="space-y-2 mb-4">
         {messages.map((msg, idx) => (
-          <div key={idx} className="bg-gray-100 p-2 rounded">
+          <div key={idx} className="bg-gray-100 p-2 rounded whitespace-pre-wrap">
             {msg}
           </div>
         ))}
