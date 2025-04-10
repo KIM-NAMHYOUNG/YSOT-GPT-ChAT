@@ -33,7 +33,9 @@ export default function ChatPage() {
       if (done) break;
 
       const chunk = decoder.decode(value);
-      const lines = chunk.split('\n').filter(line => line.trim().startsWith('data: '));
+      const lines = chunk
+        .split('\n')
+        .filter(line => line.trim().startsWith('data: '));
 
       for (const line of lines) {
         const json = line.replace('data: ', '');
