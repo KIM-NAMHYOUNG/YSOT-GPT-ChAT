@@ -5,55 +5,42 @@ import { useState } from 'react';
 export default function ChatPage() {
   const [messages, setMessages] = useState<string[]>([]);
   const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
 
     const userMessage = `You: ${input}`;
-    const updatedMessages = [...messages, userMessage];
-    setMessages(updatedMessages);
+    const newMessages = [...messages, userMessage];
+    setMessages(newMessages);
     setInput('');
-    setLoading(true);
+    setIsLoading(true);
 
-    try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: updatedMessages.map((content) => ({
-            role: 'user',
-            content: content.replace(/^You: /, ''),
-          })),
-        }),
-      });
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: newMessages.map((content) => ({ role: 'user', content })),
+      }),
+    });
 
-      if (!response.body) {
-        setMessages((prev) => [...prev, 'AI: (No response)']);
-        return;
-      }
+    if (!response.body) return;
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let aiResponse = '';
-      const streamMessages = [...updatedMessages];
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let aiMessage = 'AI: ';
+    let done = false;
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        aiResponse += decoder.decode(value, { stream: true });
-
-        // Update last message in stream
-        const lastAI = `AI: ${aiResponse}`;
-        setMessages([...streamMessages, lastAI]);
-      }
-    } catch (err) {
-      console.error('Error:', err);
-      setMessages((prev) => [...prev, 'AI: (Error occurred)']);
-    } finally {
-      setLoading(false);
+    while (!done) {
+      const { value, done: readerDone } = await reader.read();
+      done = readerDone;
+      const chunk = decoder.decode(value);
+      aiMessage += chunk;
+      setMessages([...newMessages, aiMessage]);
     }
+
+    setIsLoading(false);
   };
 
   return (
@@ -62,15 +49,15 @@ export default function ChatPage() {
 
       <div className="space-y-2 mb-4">
         {messages.map((msg, idx) => (
-          <div
-            key={idx}
-            className={`p-2 rounded ${
-              msg.startsWith('You:') ? 'bg-blue-100 text-left' : 'bg-green-100 text-left'
-            }`}
-          >
+          <div key={idx} className="bg-gray-100 p-2 rounded">
             {msg}
           </div>
         ))}
+        {isLoading && (
+          <div className="bg-gray-100 p-2 rounded animate-pulse text-gray-500">
+            AI is typing...
+          </div>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className="flex space-x-2">
@@ -78,14 +65,9 @@ export default function ChatPage() {
           className="flex-1 border rounded px-2 py-1"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={loading ? 'AI is thinking...' : 'Say something...'}
-          disabled={loading}
+          placeholder="Say something..."
         />
-        <button
-          type="submit"
-          className="px-4 py-1 bg-blue-500 text-white rounded"
-          disabled={loading}
-        >
+        <button type="submit" className="px-4 py-1 bg-blue-500 text-white rounded">
           Send
         </button>
       </form>
