@@ -1,22 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-
-type Message = {
-  role: 'user' | 'assistant';
-  content: string;
-};
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<string[]>([]);
   const [input, setInput] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
 
-    const updatedMessages: Message[] = [...messages, { role: 'user', content: input }];
-    setMessages(updatedMessages);
+    const newMessages = [...messages, `You: ${input}`];
+    setMessages(newMessages);
     setInput('');
 
     const response = await fetch('/api/chat', {
@@ -24,7 +21,12 @@ export default function ChatPage() {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ messages: updatedMessages }),
+      body: JSON.stringify({
+        messages: newMessages.map((content) => ({
+          role: 'user',
+          content,
+        })),
+      }),
     });
 
     if (!response.body) return;
@@ -36,16 +38,11 @@ export default function ChatPage() {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      const chunkStr = decoder.decode(value, { stream: true });
-
-      // JSON 안에서 content만 추출
+      const chunkStr = decoder.decode(value);
       const matches = [...chunkStr.matchAll(/"content":"(.*?)"/g)];
       for (const match of matches) {
         aiMessage += match[1];
-        setMessages((prev) => [
-          ...updatedMessages,
-          { role: 'assistant', content: aiMessage },
-        ]);
+        setMessages((prev) => [...newMessages, `AI: ${aiMessage}`]);
       }
     }
   };
@@ -57,12 +54,11 @@ export default function ChatPage() {
         {messages.map((msg, idx) => (
           <div
             key={idx}
-            className={`p-2 rounded ${
-              msg.role === 'user' ? 'bg-blue-100 text-right' : 'bg-gray-100 text-left'
-            }`}
-          >
-            <strong>{msg.role === 'user' ? 'You' : 'AI'}:</strong> {msg.content}
-          </div>
+            className="bg-gray-100 p-2 rounded prose"
+            dangerouslySetInnerHTML={{
+              __html: DOMPurify.sanitize(marked(msg)),
+            }}
+          ></div>
         ))}
       </div>
       <form onSubmit={handleSubmit} className="flex space-x-2">

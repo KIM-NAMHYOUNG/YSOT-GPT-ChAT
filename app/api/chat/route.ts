@@ -1,17 +1,13 @@
+// app/api/chat/route.ts
 export const runtime = 'edge';
 
 export async function POST(req: Request) {
   const { messages } = await req.json();
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return new Response('OpenAI API key not configured', { status: 500 });
-  }
-
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
