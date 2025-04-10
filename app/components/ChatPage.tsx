@@ -10,8 +10,9 @@ export default function ChatPage() {
     e.preventDefault();
     if (!input.trim()) return;
 
-    const newMessages = [...messages, `You: ${input}`];
-    setMessages([...newMessages, `AI:`]); // AI 응답 자리 미리 생성
+    const userMessage = `You: ${input}`;
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     setInput('');
 
     const response = await fetch('/api/chat', {
@@ -20,7 +21,7 @@ export default function ChatPage() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        messages: newMessages.map((content) => ({ role: 'user', content })),
+        messages: [{ role: 'user', content: input }],
       }),
     });
 
@@ -29,32 +30,23 @@ export default function ChatPage() {
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let aiMessage = '';
+    const streamMessages = [...updatedMessages];
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
 
-      const chunk = decoder.decode(value, { stream: true });
-      const lines = chunk.split('\n').filter((line) => line.startsWith('data: '));
+      const chunk = decoder.decode(value);
+      aiMessage += chunk;
 
-      for (const line of lines) {
-        const json = line.replace(/^data: /, '');
-        if (json === '[DONE]') return;
-
-        try {
-          const parsed = JSON.parse(json);
-          const content = parsed.choices?.[0]?.delta?.content;
-          if (content) {
-            aiMessage += content;
-            setMessages((prev) => [
-              ...prev.slice(0, -1),
-              `AI: ${aiMessage}`,
-            ]);
-          }
-        } catch (err) {
-          console.error('JSON parse error:', err);
-        }
+      // 메시지를 한 번만 추가하고, 그 뒤엔 계속 업데이트
+      if (streamMessages[streamMessages.length - 1].startsWith('AI:')) {
+        streamMessages[streamMessages.length - 1] = `AI: ${aiMessage}`;
+      } else {
+        streamMessages.push(`AI: ${aiMessage}`);
       }
+
+      setMessages([...streamMessages]);
     }
   };
 
@@ -63,7 +55,7 @@ export default function ChatPage() {
       <h1 className="text-2xl font-bold mb-4">YSOT GPT Chat</h1>
       <div className="space-y-2 mb-4">
         {messages.map((msg, idx) => (
-          <div key={idx} className="bg-gray-100 p-2 rounded whitespace-pre-wrap">
+          <div key={idx} className="bg-gray-100 p-2 rounded">
             {msg}
           </div>
         ))}

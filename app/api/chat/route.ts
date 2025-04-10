@@ -1,11 +1,9 @@
-// app/api/chat/route.ts
-import { OpenAI } from 'openai';
-import { NextResponse } from 'next/server';
+import OpenAI from 'openai';
 
 export const runtime = 'edge';
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY!,
 });
 
 export async function POST(req: Request) {
@@ -18,6 +16,7 @@ export async function POST(req: Request) {
   });
 
   const encoder = new TextEncoder();
+
   const stream = new ReadableStream({
     async start(controller) {
       for await (const chunk of response) {
