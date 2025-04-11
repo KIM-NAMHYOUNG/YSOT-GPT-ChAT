@@ -4,7 +4,7 @@ import './globals.css';
 import { useEffect, useState } from 'react';
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const [isDark, setIsDark] = useState(true); // 기본 다크 모드
+  const [isDark, setIsDark] = useState(true); // 기본값은 다크모드
 
   useEffect(() => {
     const stored = localStorage.getItem('theme');
@@ -30,7 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   };
 
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <body>
         <div className="flex justify-end p-4">
           <button
