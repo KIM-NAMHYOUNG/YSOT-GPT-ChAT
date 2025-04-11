@@ -1,8 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { marked } from 'marked';
-import DOMPurify from 'dompurify';
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<string[]>([]);
@@ -22,9 +20,9 @@ export default function ChatPage() {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        messages: newMessages.map((content) => ({
-          role: 'user',
-          content,
+        messages: newMessages.map((msg) => ({
+          role: msg.startsWith('You:') ? 'user' : 'assistant',
+          content: msg.replace(/^You: |^AI: /, ''),
         })),
       }),
     });
@@ -38,8 +36,10 @@ export default function ChatPage() {
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
+
       const chunkStr = decoder.decode(value);
       const matches = [...chunkStr.matchAll(/"content":"(.*?)"/g)];
+
       for (const match of matches) {
         aiMessage += match[1];
         setMessages((prev) => [...newMessages, `AI: ${aiMessage}`]);
@@ -48,30 +48,34 @@ export default function ChatPage() {
   };
 
   return (
-    <main className="p-4 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">YSOT GPT Chat</h1>
-      <div className="space-y-2 mb-4">
-        {messages.map((msg, idx) => (
-          <div
-            key={idx}
-            className="bg-gray-100 p-2 rounded prose"
-            dangerouslySetInnerHTML={{
-              __html: DOMPurify.sanitize(marked(msg)),
-            }}
-          ></div>
-        ))}
+    <main className="min-h-screen bg-white text-gray-900 p-6">
+      <div className="max-w-2xl mx-auto space-y-4">
+        <h1 className="text-3xl font-bold text-center text-blue-600">YSOT GPT Chat</h1>
+
+        <div className="bg-gray-100 p-4 rounded-md shadow-sm h-80 overflow-y-auto">
+          {messages.map((msg, idx) => (
+            <p key={idx} className="mb-2">
+              {msg}
+            </p>
+          ))}
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex gap-2">
+          <input
+            type="text"
+            className="flex-1 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            placeholder="메시지를 입력하세요..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+          />
+          <button
+            type="submit"
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+          >
+            전송
+          </button>
+        </form>
       </div>
-      <form onSubmit={handleSubmit} className="flex space-x-2">
-        <input
-          className="flex-1 border rounded px-2 py-1"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Say something..."
-        />
-        <button type="submit" className="px-4 py-1 bg-blue-500 text-white rounded">
-          Send
-        </button>
-      </form>
     </main>
   );
 }
