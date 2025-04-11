@@ -1,3 +1,23 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/* app/globals.css */
+
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family: sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+body {
+  @apply bg-white text-black;
+}
+
+.dark body {
+  @apply bg-gray-900 text-white;
+}
+
+/* 버튼, 입력 등 추가 스타일 */
+button,
+input {
+  @apply transition-all;
+}
