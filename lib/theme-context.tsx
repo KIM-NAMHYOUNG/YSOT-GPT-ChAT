@@ -1,4 +1,3 @@
-// lib/theme-context.tsx
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
@@ -16,26 +15,29 @@ const ThemeContext = createContext<{
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('light')
 
+  // 초기 테마 설정
   useEffect(() => {
     const stored = localStorage.getItem('theme') as Theme | null
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
     const initial = stored ?? (prefersDark ? 'dark' : 'light')
-  
     setTheme(initial)
-  
+
     const root = document.documentElement
-    root.classList.remove('dark', 'light') // 기존 클래스 제거
-    root.classList.add(initial) // 명확히 설정: 'dark' 또는 'light'
+    root.classList.remove('light', 'dark')
+    root.classList.add(initial)
   }, [])
 
-  const toggleTheme = () => {
-    const next = theme === 'light' ? 'dark' : 'light'
-    setTheme(next)
-    localStorage.setItem('theme', next)
-  
+  // 테마 변경될 때 html class 변경
+  useEffect(() => {
     const root = document.documentElement
-    root.classList.remove('dark', 'light')
-    root.classList.add(next)
+    root.classList.remove('light', 'dark')
+    root.classList.add(theme)
+  }, [theme])
+
+  const toggleTheme = () => {
+    const next: Theme = theme === 'light' ? 'dark' : 'light'
+    localStorage.setItem('theme', next)
+    setTheme(next)
   }
 
   return (
