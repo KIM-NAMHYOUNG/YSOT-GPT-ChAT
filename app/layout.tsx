@@ -45,6 +45,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {isDark ? '☀️ 라이트 모드' : '🌙 다크 모드'}
           </button>
         </div>
+
+        <div className="p-4 bg-white text-black dark:bg-black dark:text-white transition-colors rounded">
+        다크모드 테스트 박스입니다 🌓
+        </div>
+        
         {children}
       </body>
     </html>
