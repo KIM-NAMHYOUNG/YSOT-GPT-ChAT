@@ -35,7 +35,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   };
 
   return (
-    <html lang="ko" className={isDark ? 'dark' : ''}>
+    <html lang="ko">
       <body className="bg-white text-black dark:bg-zinc-900 dark:text-white transition-colors duration-300">
         <div className="flex justify-end p-4">
           <button
