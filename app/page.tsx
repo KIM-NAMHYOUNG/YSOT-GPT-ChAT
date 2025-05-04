@@ -8,7 +8,7 @@ export default function Home() {
       {/* 다크모드 토글 버튼 */}
       <ThemeToggle />
 
-      {/* 테스트용 다크모드 박스 */}
+      {/* 🧪 여기! 테스트 박스 */}
       <div className="w-64 h-32 bg-white text-black dark:bg-purple-900 dark:text-yellow-300 transition-all duration-500 rounded-xl flex items-center justify-center text-xl">
         다크모드 테스트 박스입니다 🌗
       </div>
