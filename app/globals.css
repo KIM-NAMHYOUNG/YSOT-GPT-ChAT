@@ -23,3 +23,10 @@ input, button, textarea, select {
   margin: 0 auto;
   padding: 1rem;
 }
+
+/* 💡 다크모드 강제 포함용 유틸리티 클래스 */
+@layer utilities {
+  .force-dark-test {
+    @apply dark:bg-zinc-900 dark:text-white dark:bg-purple-900 dark:text-yellow-300 dark:border-white;
+  }
+}
