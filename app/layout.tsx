@@ -6,9 +6,13 @@ import { useEffect, useState } from 'react';
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const [isDark, setIsDark] = useState(true); // 기본값은 다크모드
 
+  // 초기에 localStorage 확인해서 다크모드 여부 적용
   useEffect(() => {
     const stored = localStorage.getItem('theme');
-    if (stored === 'light') {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const defaultTheme = stored ?? (prefersDark ? 'dark' : 'light');
+
+    if (defaultTheme === 'light') {
       document.documentElement.classList.remove('dark');
       setIsDark(false);
     } else {
@@ -17,8 +21,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     }
   }, []);
 
+  // 다크모드 토글 함수
   const toggleTheme = () => {
-    if (document.documentElement.classList.contains('dark')) {
+    if (isDark) {
       document.documentElement.classList.remove('dark');
       localStorage.setItem('theme', 'light');
       setIsDark(false);
@@ -30,8 +35,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   };
 
   return (
-    <html lang="en">
-      <body>
+    <html lang="ko" className={isDark ? 'dark' : ''}>
+      <body className="bg-white text-black dark:bg-zinc-900 dark:text-white transition-colors duration-300">
         <div className="flex justify-end p-4">
           <button
             onClick={toggleTheme}
