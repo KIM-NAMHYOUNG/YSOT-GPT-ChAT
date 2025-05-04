@@ -15,26 +15,15 @@ const ThemeContext = createContext<{
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('light')
 
-  // 초기 테마 설정
+  // 초기 테마 설정 (localStorage or 시스템 다크모드 선호도)
   useEffect(() => {
     const stored = localStorage.getItem('theme') as Theme | null
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
     const initial = stored ?? (prefersDark ? 'dark' : 'light')
     setTheme(initial)
-// 초기 theme 설정
-useEffect(() => {
-  const stored = localStorage.getItem('theme') as Theme | null
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-  const initial = stored ?? (prefersDark ? 'dark' : 'light')
-  setTheme(initial)
-}, [])
+  }, [])
 
-// 테마 변경될 때 html class 변경
-useEffect(() => {
-  const root = document.documentElement
-  root.classList.remove('light', 'dark')
-  root.classList.add(theme)
-}, [theme])
+  // theme state가 바뀔 때마다 <html>에 class 붙이기
   useEffect(() => {
     const root = document.documentElement
     root.classList.remove('light', 'dark')
